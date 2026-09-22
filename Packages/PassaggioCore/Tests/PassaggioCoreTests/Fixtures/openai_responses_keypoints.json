@@ -1,0 +1,25 @@
+{
+  "id": "resp_0a1b2c",
+  "object": "response",
+  "created_at": 1790000000,
+  "status": "completed",
+  "incomplete_details": null,
+  "model": "gpt-5.6-luna",
+  "output": [
+    {"id": "rs_1", "type": "reasoning", "summary": []},
+    {
+      "id": "msg_1",
+      "type": "message",
+      "status": "completed",
+      "role": "assistant",
+      "content": [
+        {
+          "type": "output_text",
+          "annotations": [],
+          "text": "{\"points\":[{\"theme\":\"registration_mix\",\"summary\":\"Don't push chest voice up around C4; let it tip into mix earlier.\",\"quote\":\"You're pushing chest too high around the C, let it tip over into the mix earlier.\",\"segment\":1},{\"theme\":\"tension_habits\",\"summary\":\"Keep the jaw loose; it clamps on the top note.\",\"quote\":\"keep the jaw loose, I saw it clamp on the top note\",\"segment\":2},{\"theme\":\"vowels\",\"summary\":\"Invented point with a bad index.\",\"quote\":\"\",\"segment\":17}]}"
+        }
+      ]
+    }
+  ],
+  "usage": {"input_tokens": 612, "output_tokens": 140, "total_tokens": 752}
+}

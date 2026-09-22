@@ -1,0 +1,13 @@
+{
+  "id": "msg_01XYZ",
+  "type": "message",
+  "role": "assistant",
+  "model": "claude-opus-5",
+  "content": [
+    {"type": "thinking", "thinking": "", "signature": "EqQBCgIYAhIM"},
+    {"type": "text", "text": "{\"points\":[{\"theme\":\"registration_mix\",\"summary\":\"Let chest tip into mix before C4.\",\"quote\":\"let it tip over into the mix earlier\",\"segment\":1}]}"}
+  ],
+  "stop_reason": "end_turn",
+  "stop_sequence": null,
+  "usage": {"input_tokens": 700, "output_tokens": 90}
+}

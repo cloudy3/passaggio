@@ -1,0 +1,5 @@
+{
+  "text": "…",
+  "segments": [{"speaker": "teacher", "start": 0, "end": 5, "text": "And then the"}],
+  "usage": {"type": "tokens", "input_tokens": 9000, "output_tokens": 2000, "total_tokens": 11000}
+}

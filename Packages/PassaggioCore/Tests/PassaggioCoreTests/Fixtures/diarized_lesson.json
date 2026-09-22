@@ -1,0 +1,13 @@
+{
+  "task": "transcribe",
+  "duration": 62.4,
+  "text": "Okay, let's start with the five note scale on nay. Nay nay nay nay nay. Good. You're pushing chest too high around the C, let it tip over into the mix earlier. Should I keep the nay? Yes, keep the nay and keep the jaw loose, I saw it clamp on the top note.",
+  "segments": [
+    {"type": "transcript.text.segment", "id": "seg_0", "speaker": "teacher", "start": 0.4, "end": 4.1, "text": "Okay, let's start with the five note scale on nay."},
+    {"type": "transcript.text.segment", "id": "seg_1", "speaker": "me", "start": 6.0, "end": 14.8, "text": "Nay nay nay nay nay."},
+    {"type": "transcript.text.segment", "id": "seg_2", "speaker": "teacher", "start": 15.2, "end": 22.9, "text": "Good. You're pushing chest too high around the C, let it tip over into the mix earlier."},
+    {"type": "transcript.text.segment", "id": "seg_3", "speaker": "me", "start": 23.5, "end": 25.0, "text": "Should I keep the nay?"},
+    {"type": "transcript.text.segment", "id": "seg_4", "speaker": "teacher", "start": 25.3, "end": 31.7, "text": "Yes, keep the nay and keep the jaw loose, I saw it clamp on the top note."}
+  ],
+  "usage": {"type": "tokens", "input_tokens": 1180, "output_tokens": 96, "total_tokens": 1276, "input_token_details": {"text_tokens": 0, "audio_tokens": 1180}}
+}

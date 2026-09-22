@@ -1,0 +1,10 @@
+// Shared build settings. Personal values (your Team ID) live in Local.xcconfig,
+// which is git-ignored and created by `make bootstrap`.
+
+// Fixed so reinstalling every 7 days replaces the app in place and keeps its data.
+// If Xcode reports the identifier is taken, change it once here and never again.
+PASSAGGIO_BUNDLE_ID = sg.cloudy3.passaggio
+
+DEVELOPMENT_TEAM =
+
+#include? "Local.xcconfig"

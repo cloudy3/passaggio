@@ -1,0 +1,82 @@
+# XcodeGen spec. `make project` (or `xcodegen generate`) produces Passaggio.xcodeproj,
+# which is not committed: this file is the single source of truth for the project.
+name: Passaggio
+
+options:
+  bundleIdPrefix: sg.cloudy3
+  deploymentTarget:
+    iOS: "26.0"
+  createIntermediateGroups: true
+  developmentLanguage: en
+
+configFiles:
+  Debug: Config/Base.xcconfig
+  Release: Config/Base.xcconfig
+
+settings:
+  base:
+    # Swift 5 mode with complete concurrency checking: data-race diagnostics are
+    # warnings rather than errors, since this code was written without a Mac to
+    # compile against. Switch to "6.0" once a build shows no concurrency warnings.
+    SWIFT_VERSION: "5.0"
+    SWIFT_STRICT_CONCURRENCY: complete
+    # Approachable concurrency: UI code is main-actor by default, and audio or
+    # network work opts out explicitly with @concurrent / nonisolated.
+    SWIFT_DEFAULT_ACTOR_ISOLATION: MainActor
+    SWIFT_APPROACHABLE_CONCURRENCY: YES
+    ENABLE_USER_SCRIPT_SANDBOXING: YES
+    CURRENT_PROJECT_VERSION: 1
+    MARKETING_VERSION: "1.0"
+
+packages:
+  PassaggioCore:
+    path: Packages/PassaggioCore
+
+targets:
+  Passaggio:
+    type: application
+    platform: iOS
+    sources:
+      - path: Passaggio
+    dependencies:
+      - package: PassaggioCore
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PASSAGGIO_BUNDLE_ID)
+        TARGETED_DEVICE_FAMILY: "1"
+        INFOPLIST_FILE: Passaggio/Info.plist
+        GENERATE_INFOPLIST_FILE: NO
+        ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME: AccentColor
+        CODE_SIGN_STYLE: Automatic
+        # No entitlements file on purpose: Personal Team signing supports none of
+        # iCloud, App Groups or push, and the Keychain needs no entitlement.
+        CODE_SIGN_ENTITLEMENTS: ""
+
+  PassaggioTests:
+    type: bundle.unit-test
+    platform: iOS
+    sources:
+      - path: PassaggioTests
+    dependencies:
+      - target: Passaggio
+    settings:
+      base:
+        PRODUCT_BUNDLE_IDENTIFIER: $(PASSAGGIO_BUNDLE_ID).tests
+        GENERATE_INFOPLIST_FILE: YES
+        TEST_HOST: $(BUILT_PRODUCTS_DIR)/Passaggio.app/$(BUNDLE_EXECUTABLE_FOLDER_PATH)/Passaggio
+        BUNDLE_LOADER: $(TEST_HOST)
+
+schemes:
+  Passaggio:
+    build:
+      targets:
+        Passaggio: all
+        PassaggioTests: [test]
+    test:
+      # PassaggioCore's own tests run with `swift test` (make test-core).
+      targets:
+        - PassaggioTests
+    run:
+      config: Debug
+    archive:
+      config: Release
