@@ -15,3 +15,5 @@ xcuserdata/
 
 .DS_Store
 __pycache__/
+# SwiftPM on Windows writes a resource-bundle plist here during builds
+Packages/PassaggioCore/Info.plist
