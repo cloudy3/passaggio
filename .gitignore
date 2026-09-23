@@ -9,9 +9,18 @@ build/
 DerivedData/
 .build/
 Packages/PassaggioCore/.build/
-Packages/PassaggioCore/.swiftpm/
-*.xcuserstate
+*.ipa
+*.dSYM.zip
+*.hmap
+*.moved-aside
+
+# Per-user Xcode state -- never shared between machines
 xcuserdata/
+*.xcuserstate
+*.xcuserdatad/
+**/xcshareddata/IDEWorkspaceChecks.plist
+**/xcshareddata/WorkspaceSettings.xcsettings
+.swiftpm/
 
 .DS_Store
 __pycache__/
