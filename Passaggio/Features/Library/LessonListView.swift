@@ -111,15 +111,15 @@ struct LessonRow: View {
             Text(lesson.title)
                 .font(.headline)
                 .lineLimit(2)
-            HStack(spacing: 6) {
-                Text(lesson.date, format: .dateTime.day().month(.abbreviated).year())
-                Text("·")
-                Text(Duration.seconds(lesson.duration), format: .units(allowed: [.hours, .minutes], width: .abbreviated))
-            }
-            .font(.subheadline)
-            .foregroundStyle(.secondary)
+            // One Text, so at large sizes it wraps like a sentence rather than column by column.
+            Text("\(lesson.date, format: .dateTime.day().month(.abbreviated).year())\u{00A0}· \(Duration.seconds(lesson.duration), format: .units(allowed: [.hours, .minutes], width: .abbreviated))")
+                .font(.subheadline)
+                .foregroundStyle(.secondary)
+            // Lists give labels a wide icon column; here the icon should sit flush with the title.
             statusLabel
                 .font(.caption)
+                .labelStyle(.titleAndIcon)
+                .labelIconToTitleSpacing(4)
         }
         .padding(.vertical, 2)
         .accessibilityElement(children: .combine)
@@ -166,3 +166,9 @@ struct LessonDestination: View {
         }
     }
 }
+
+#if DEBUG
+#Preview("Lessons", traits: .sampleData) {
+    LessonListView()
+}
+#endif

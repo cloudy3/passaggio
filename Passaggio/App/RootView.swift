@@ -1,8 +1,19 @@
 import SwiftData
 import SwiftUI
 
-enum AppTab: Hashable {
+enum AppTab: String, Hashable {
     case lessons, insights, practice, tracks, settings
+
+    /// The tab shown at launch. Debug builds accept `-PassaggioTab practice` as a
+    /// launch argument, so screenshots of any tab can be taken without tapping.
+    static var initial: AppTab {
+        #if DEBUG
+        if let raw = UserDefaults.standard.string(forKey: "PassaggioTab"), let tab = AppTab(rawValue: raw) {
+            return tab
+        }
+        #endif
+        return .lessons
+    }
 }
 
 /// Navigation target for "jump to this moment in the lesson".
@@ -13,7 +24,7 @@ struct LessonMoment: Hashable {
 
 struct RootView: View {
     @Environment(\.modelContext) private var context
-    @State private var tab: AppTab = .lessons
+    @State private var tab: AppTab = .initial
     @State private var importError: String?
     @State private var isImporting = false
 

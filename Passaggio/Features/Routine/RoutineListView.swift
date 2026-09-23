@@ -6,6 +6,8 @@ struct RoutineListView: View {
     @Environment(\.modelContext) private var context
     @Environment(AppSettings.self) private var settings
     @Query(sort: \Routine.createdAt, order: .reverse) private var routines: [Routine]
+    /// Routines are built from feedback topics, so there's nothing to build until a lesson is analysed.
+    @Query private var topics: [FeedbackTopic]
 
     @State private var path = NavigationPath()
     @State private var generatingLength: Int?
@@ -26,10 +28,14 @@ struct RoutineListView: View {
                             }
                             .frame(minHeight: 44)
                         }
-                        .disabled(generatingLength != nil)
+                        .disabled(generatingLength != nil || topics.isEmpty)
                     }
                 } footer: {
-                    Text("Built from your lesson feedback, weighted toward points your teacher repeats and recent lessons.")
+                    if topics.isEmpty {
+                        Text("Routines are built from your teacher’s feedback. Transcribe a lesson to get started.")
+                    } else {
+                        Text("Built from your lesson feedback, weighted toward points your teacher repeats and recent lessons.")
+                    }
                 }
 
                 if !routines.isEmpty {
@@ -93,3 +99,9 @@ struct RoutineRow: View {
         .accessibilityElement(children: .combine)
     }
 }
+
+#if DEBUG
+#Preview("Practice", traits: .sampleData) {
+    RoutineListView()
+}
+#endif

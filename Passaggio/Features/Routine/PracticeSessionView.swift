@@ -199,3 +199,21 @@ struct PracticeSessionView: View {
         dismiss()
     }
 }
+
+#if DEBUG
+#Preview("Practice", traits: .sampleData) {
+    @Previewable @Query var routines: [Routine]
+    if let routine = routines.first {
+        PracticeSessionView(routine: routine)
+    }
+}
+
+#Preview("Practice, dark, large text", traits: .sampleData) {
+    @Previewable @Query var routines: [Routine]
+    if let routine = routines.first {
+        PracticeSessionView(routine: routine)
+            .preferredColorScheme(.dark)
+            .dynamicTypeSize(.accessibility3)
+    }
+}
+#endif

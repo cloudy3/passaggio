@@ -180,3 +180,25 @@ struct LessonDetailsForm: View {
         .onDisappear { try? context.save() }
     }
 }
+
+#if DEBUG
+#Preview("Lesson", traits: .sampleData) {
+    @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
+    NavigationStack {
+        if let lesson = lessons.first(where: { $0.status == .analyzed }) {
+            LessonDetailView(lesson: lesson)
+        }
+    }
+}
+
+#Preview("Lesson, dark, large text", traits: .sampleData) {
+    @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
+    NavigationStack {
+        if let lesson = lessons.first(where: { $0.status == .analyzed }) {
+            LessonDetailView(lesson: lesson)
+        }
+    }
+    .preferredColorScheme(.dark)
+    .dynamicTypeSize(.accessibility3)
+}
+#endif
