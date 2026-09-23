@@ -92,6 +92,8 @@ struct KeyPointRow: View {
     let currentLessonID: UUID
     var onJump: (TimeInterval) -> Void
 
+    @Environment(\.dynamicTypeSize) private var dynamicTypeSize
+
     private var otherLessons: Int {
         (point.topic?.lessons.filter { $0.id != currentLessonID }.count) ?? 0
     }
@@ -100,7 +102,13 @@ struct KeyPointRow: View {
         Button {
             onJump(point.timestamp)
         } label: {
-            HStack(alignment: .top, spacing: 12) {
+            // At accessibility sizes the timestamp moves under the text, which would
+            // otherwise be squeezed into a narrow column a few words wide.
+            let stacked = dynamicTypeSize.isAccessibilitySize
+            let layout = stacked
+                ? AnyLayout(VStackLayout(alignment: .leading, spacing: 8))
+                : AnyLayout(HStackLayout(alignment: .top, spacing: 12))
+            layout {
                 VStack(alignment: .leading, spacing: 6) {
                     Text(point.summary)
                         .font(.body)
@@ -114,13 +122,16 @@ struct KeyPointRow: View {
                     if otherLessons > 0 {
                         Label(otherLessons == 1 ? "Also said in 1 other lesson" : "Also said in \(otherLessons) other lessons",
                               systemImage: "arrow.triangle.2.circlepath")
+                            .labelStyle(.titleAndIcon)
+                            .labelIconToTitleSpacing(4)
                             .font(.caption.weight(.semibold))
                             .foregroundStyle(Color.accentColor)
                     }
                 }
-                Spacer(minLength: 8)
+                if !stacked { Spacer(minLength: 8) }
                 Label(formatTimestamp(point.timestamp), systemImage: "play.circle.fill")
                     .labelStyle(.titleAndIcon)
+                    .labelIconToTitleSpacing(6)
                     .font(.subheadline.monospacedDigit().weight(.semibold))
                     .foregroundStyle(Color.accentColor)
                     .frame(minHeight: 44)
