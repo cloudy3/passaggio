@@ -5,6 +5,7 @@ import SwiftUI
 struct KeyPointsView: View {
     let lesson: Lesson
     var onJump: (TimeInterval) -> Void
+    var onShowInTranscript: (TranscriptSegment) -> Void = { _ in }
 
     @Environment(\.modelContext) private var context
     @Environment(LessonProcessor.self) private var processor
@@ -14,7 +15,7 @@ struct KeyPointsView: View {
             statusSection
 
             if lesson.status == .needsSpeakers {
-                SpeakerAssignmentSection(lesson: lesson)
+                SpeakerAssignmentSection(lesson: lesson, onShowInTranscript: onShowInTranscript)
             }
 
             let grouped = Dictionary(grouping: lesson.sortedKeyPoints, by: \.theme)
@@ -147,12 +148,15 @@ struct KeyPointRow: View {
 /// the user picks which anonymous speaker is the teacher.
 struct SpeakerAssignmentSection: View {
     let lesson: Lesson
+    /// Tapping a speaker's sample line shows it in the transcript and plays from it,
+    /// so you can hear who it is before labelling.
+    var onShowInTranscript: (TranscriptSegment) -> Void
     @Environment(\.modelContext) private var context
     @Environment(LessonProcessor.self) private var processor
 
     private struct SpeakerSummary: Identifiable {
         var label: String
-        var sample: String
+        var sample: TranscriptSegment
         var count: Int
         var id: String { label }
     }
@@ -160,8 +164,8 @@ struct SpeakerAssignmentSection: View {
     private var speakers: [SpeakerSummary] {
         let groups = Dictionary(grouping: lesson.sortedSegments.filter { $0.role == .unknown }, by: \.speaker)
         return groups
-            .map { label, segments in
-                let longest = segments.max { $0.text.count < $1.text.count }?.text ?? ""
+            .compactMap { label, segments in
+                guard let longest = segments.max(by: { $0.text.count < $1.text.count }) else { return nil }
                 return SpeakerSummary(label: label, sample: longest, count: segments.count)
             }
             .sorted { $0.count > $1.count }
@@ -173,10 +177,28 @@ struct SpeakerAssignmentSection: View {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("Speaker \(speaker.label) · \(speaker.count) lines")
                         .font(.headline)
-                    Text("“\(speaker.sample)”")
-                        .font(.callout)
-                        .foregroundStyle(.secondary)
-                        .lineLimit(3)
+                    Button {
+                        onShowInTranscript(speaker.sample)
+                    } label: {
+                        VStack(alignment: .leading, spacing: 6) {
+                            Text("“\(speaker.sample.text)”")
+                                .font(.callout)
+                                .foregroundStyle(.secondary)
+                                .lineLimit(3)
+                            Label(formatTimestamp(speaker.sample.start), systemImage: "text.magnifyingglass")
+                                .labelStyle(.titleAndIcon)
+                                .labelIconToTitleSpacing(4)
+                                .font(.subheadline.monospacedDigit().weight(.semibold))
+                                .foregroundStyle(Color.accentColor)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 44, alignment: .leading)
+                        .contentShape(.rect)
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityElement(children: .ignore)
+                    .accessibilityLabel("Line at \(formatTimestamp(speaker.sample.start)): \(speaker.sample.text)")
+                    .accessibilityHint("Shows this line in the transcript and plays from here")
+                    .accessibilityAddTraits(.isButton)
                     HStack {
                         Button("Teacher") { assign(speaker.label, to: .teacher) }
                             .buttonStyle(.borderedProminent)

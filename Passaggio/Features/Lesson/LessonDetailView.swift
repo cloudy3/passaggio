@@ -18,6 +18,7 @@ struct LessonDetailView: View {
     }
 
     @State private var pane: Pane = .notes
+    @State private var focusedSegment: PersistentIdentifier?
     @State private var rangeTask: RangeSelectionSheet.Purpose?
     @State private var errorMessage: String?
     @State private var didApplyStart = false
@@ -36,9 +37,13 @@ struct LessonDetailView: View {
 
             switch pane {
             case .notes:
-                KeyPointsView(lesson: lesson, onJump: { jump(to: $0) })
+                KeyPointsView(lesson: lesson, onJump: { jump(to: $0) }, onShowInTranscript: { segment in
+                    focusedSegment = segment.persistentModelID
+                    pane = .transcript
+                    jump(to: segment.start, leadIn: 0)
+                })
             case .transcript:
-                TranscriptView(lesson: lesson, onJump: { jump(to: $0, leadIn: 0) })
+                TranscriptView(lesson: lesson, focusedSegment: $focusedSegment, onJump: { jump(to: $0, leadIn: 0) })
             case .details:
                 LessonDetailsForm(lesson: lesson)
             }
@@ -186,6 +191,15 @@ struct LessonDetailsForm: View {
     @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
     NavigationStack {
         if let lesson = lessons.first(where: { $0.status == .analyzed }) {
+            LessonDetailView(lesson: lesson)
+        }
+    }
+}
+
+#Preview("Lesson, speakers not labelled", traits: .sampleData) {
+    @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
+    NavigationStack {
+        if let lesson = lessons.first(where: { $0.status == .needsSpeakers }) {
             LessonDetailView(lesson: lesson)
         }
     }

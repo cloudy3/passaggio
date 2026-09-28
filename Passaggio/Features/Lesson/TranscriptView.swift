@@ -4,10 +4,14 @@ import SwiftUI
 
 struct TranscriptView: View {
     let lesson: Lesson
+    /// A line to scroll to and briefly highlight, set when another tab sends you here.
+    /// Cleared once it's shown.
+    @Binding var focusedSegment: PersistentIdentifier?
     var onJump: (TimeInterval) -> Void
 
     @Environment(\.modelContext) private var context
     @State private var teacherOnly = false
+    @State private var highlighted: PersistentIdentifier?
 
     private var segments: [TranscriptSegment] {
         let all = lesson.sortedSegments
@@ -15,6 +19,23 @@ struct TranscriptView: View {
     }
 
     var body: some View {
+        ScrollViewReader { proxy in
+            transcriptList
+                .task(id: focusedSegment) {
+                    guard let id = focusedSegment else { return }
+                    await Task.yield()
+                    withAnimation { proxy.scrollTo(id, anchor: .center) }
+                    highlighted = id
+                    focusedSegment = nil
+                }
+                .task(id: highlighted) {
+                    guard highlighted != nil, (try? await Task.sleep(for: .seconds(2))) != nil else { return }
+                    withAnimation(.easeOut(duration: 0.6)) { highlighted = nil }
+                }
+        }
+    }
+
+    private var transcriptList: some View {
         List {
             if lesson.segments.isEmpty {
                 ContentUnavailableView("No Transcript Yet", systemImage: "text.alignleft",
@@ -40,6 +61,7 @@ struct TranscriptView: View {
                         }
                     }
                     .buttonStyle(.plain)
+                    .listRowBackground(highlighted == segment.persistentModelID ? Color.accentColor.opacity(0.18) : nil)
                     .accessibilityElement(children: .combine)
                     .accessibilityHint("Plays from here")
                     .contextMenu {

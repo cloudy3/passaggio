@@ -21,6 +21,7 @@ The sample lesson contains two synthetic voices: the "teacher" gives three corre
 ## 2. Transcription and key points
 - [ ] Settings: save the OpenAI key; the status shows "Saved".
 - [ ] Transcribe the sample lesson without voice samples: the Key Points tab asks "Who is your teacher?", and choosing one runs key point extraction.
+- [ ] On "Who is your teacher?", tapping a speaker's quote (with its timestamp) switches to the Transcript tab, centres that line with a brief highlight, and plays from it.
 - [ ] ⋯ › Mark Teacher's Voice: select 3–6 s of teacher speech (preview it), then save. Mark My Voice likewise. Settings › Voice Samples lists both.
 - [ ] ⋯ › Transcribe Again: segments are now labelled Teacher and Me with no manual step.
 - [ ] Key points appear under Registration and mix (chest/C), Tension and bad habits (jaw), and Breath support (support). Tapping each plays from just before the correction.

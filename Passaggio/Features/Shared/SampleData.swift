@@ -37,7 +37,10 @@ struct SampleData: PreviewModifier {
         earlier.status = .analyzed
         let fresh = Lesson(title: "Lesson recording", date: .now, duration: 2_640,
                            fileName: "sample-fresh.m4a", waveform: waveform(seed: 3))
-        for lesson in [analysed, earlier, fresh] { context.insert(lesson) }
+        let unlabelled = Lesson(title: "Speakers not labelled yet", date: .now.addingTimeInterval(-1 * day),
+                                duration: 2_700, fileName: "sample-unlabelled.m4a", waveform: waveform(seed: 4))
+        unlabelled.status = .needsSpeakers
+        for lesson in [analysed, earlier, fresh, unlabelled] { context.insert(lesson) }
 
         let lines: [(TimeInterval, SpeakerRole, String)] = [
             (12, .teacher, "Let’s start on an ng hum, five-tone scale, from C3."),
@@ -51,6 +54,18 @@ struct SampleData: PreviewModifier {
             let segment = TranscriptSegment(start: start, end: start + 8, speaker: role.referenceName ?? "A", role: role, text: text)
             context.insert(segment)
             segment.lesson = analysed
+        }
+        // The same exchange repeated through a long lesson, with anonymous speakers,
+        // so jumping to a speaker's sample line has somewhere to scroll.
+        for round in 0..<8 {
+            for (start, role, text) in lines {
+                let speaker = role == .teacher ? "A" : "B"
+                let time = Double(round) * 300 + start
+                let segment = TranscriptSegment(start: time, end: time + 8, speaker: speaker, role: .unknown,
+                                                text: round == 5 && start == 38 ? text + " Keep it on the breath all the way to the end of the phrase." : text)
+                context.insert(segment)
+                segment.lesson = unlabelled
+            }
         }
 
         let mix = FeedbackTopic(theme: .registrationMix, title: "Narrow the vowel through the passaggio")
