@@ -74,7 +74,7 @@ final class LessonProcessor {
         let analysis = try await AudioAnalysis.analyze(url: lesson.fileURL)
         let planner = ChunkPlanner()
         let chunks = planner.plan(duration: analysis.duration, envelope: analysis.envelope, hop: analysis.hop)
-        let references = try loadReferences(context: context)
+        let references = try await loadReferences(context: context)
 
         let scratch = try FileStore.makeTemporaryDirectory()
         defer { FileStore.removeIfPresent(scratch) }
@@ -131,13 +131,23 @@ final class LessonProcessor {
         try context.save()
     }
 
-    private func loadReferences(context: ModelContext) throws -> [SpeakerReferenceClip] {
+    private func loadReferences(context: ModelContext) async throws -> [SpeakerReferenceClip] {
         let stored = try context.fetch(FetchDescriptor<SpeakerReference>(sortBy: [SortDescriptor(\.createdAt)]))
-        return stored.compactMap { reference in
+        var clips: [SpeakerReferenceClip] = []
+        for reference in stored {
             guard let name = reference.role.referenceName,
-                  let data = try? Data(contentsOf: reference.fileURL) else { return nil }
-            return SpeakerReferenceClip(name: name, audio: data, mimeType: "audio/wav")
+                  let data = try? Data(contentsOf: reference.fileURL) else { continue }
+            var clip = SpeakerReferenceClip(name: name, audio: data, mimeType: "audio/wav")
+            if clip.exceedsFormFieldLimit {
+                // Saved before references were downmixed: re-encode so the request is accepted.
+                let scratch = FileStore.cache.appendingPathComponent("reference-\(UUID().uuidString).wav")
+                defer { FileStore.removeIfPresent(scratch) }
+                try await AudioExport.exportWAV(from: reference.fileURL, range: 0...reference.duration, to: scratch)
+                clip.audio = try Data(contentsOf: scratch)
+            }
+            clips.append(clip)
         }
+        return clips
     }
 
     // MARK: - Analysis

@@ -207,6 +207,15 @@ struct TranscriptionRequestTests {
         #expect(teacherName.lowerBound < meName.lowerBound)
     }
 
+    @Test func flagsReferencesThatExceedTheFormFieldLimit() {
+        // Sent as a base64 form field, and the API rejects any non-file part over 1024 KB.
+        let fits = SpeakerReferenceClip(name: "teacher", audio: Data(count: 10 * 32_000)) // 10 s of 16 kHz mono
+        let tooBig = SpeakerReferenceClip(name: "teacher", audio: Data(count: 6 * 2 * 2 * 48_000)) // 6 s of 48 kHz stereo
+        #expect(!fits.exceedsFormFieldLimit)
+        #expect(tooBig.exceedsFormFieldLimit)
+        #expect(fits.dataURL.utf8.count < SpeakerReferenceClip.maximumFormFieldBytes)
+    }
+
     @Test func caps4References() throws {
         let client = OpenAITranscriptionClient(apiKey: "k", http: StubHTTPClient([]))
         let refs = (0..<6).map { SpeakerReferenceClip(name: "s\($0)", audio: Data([0])) }

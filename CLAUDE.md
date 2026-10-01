@@ -2,7 +2,7 @@
 
 This file provides guidance to Claude Code (claude.ai/code) when working with code in this repository.
 
-Passaggio is an iPhone app (iOS 26+, SwiftUI + SwiftData) that turns recorded singing lessons into key points, recurring-feedback insights, practice routines and piano practice tracks. See `README.md` for the user-facing feature list and install steps, and `VERIFY.md` for the manual on-device checklist.
+Passaggio is an iPhone app (iOS 27+, SwiftUI + SwiftData) that turns recorded singing lessons into key points, recurring-feedback insights, practice routines and piano practice tracks. See `README.md` for the user-facing feature list and install steps, and `VERIFY.md` for the manual on-device checklist.
 
 ## Commands
 

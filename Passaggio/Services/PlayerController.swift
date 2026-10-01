@@ -17,6 +17,8 @@ final class PlayerController: NSObject, AVAudioPlayerDelegate {
 
     @ObservationIgnored private var player: AVAudioPlayer?
     @ObservationIgnored private var ticker: Task<Void, Never>?
+    /// Activating the audio session can block, so playback starts after it finishes.
+    @ObservationIgnored private var startTask: Task<Void, Never>?
 
     /// Loads `url` unless it's already the current item.
     func load(_ url: URL, id: String, loop: ClosedRange<TimeInterval>? = nil, loopWholeFile: Bool = false) {
@@ -48,17 +50,24 @@ final class PlayerController: NSObject, AVAudioPlayerDelegate {
     func isCurrent(_ id: String) -> Bool { itemID == id }
 
     func play() {
-        guard let player else { return }
-        activateSession()
-        if let loopRange, !loopRange.contains(player.currentTime) {
-            player.currentTime = loopRange.lowerBound
-        }
-        player.play()
+        guard player != nil, !isPlaying else { return }
         isPlaying = true
-        startTicker()
+        startTask?.cancel()
+        startTask = Task {
+            let failure = await Self.activateSession()
+            // Paused, stopped or replaced while the session was activating.
+            guard !Task.isCancelled, let player else { return }
+            if let failure { errorMessage = failure }
+            if let loopRange, !loopRange.contains(player.currentTime) {
+                player.currentTime = loopRange.lowerBound
+            }
+            player.play()
+            startTicker()
+        }
     }
 
     func pause() {
+        startTask?.cancel()
         player?.pause()
         isPlaying = false
         syncTime()
@@ -70,6 +79,7 @@ final class PlayerController: NSObject, AVAudioPlayerDelegate {
     }
 
     func stop() {
+        startTask?.cancel()
         ticker?.cancel()
         player?.stop()
         player = nil
@@ -100,15 +110,18 @@ final class PlayerController: NSObject, AVAudioPlayerDelegate {
 
     // MARK: - Private
 
-    private func activateSession() {
+    /// Returns an error message, or nil on success. Uses the async activation API so the
+    /// main thread isn't blocked (`setActive` logs a warning when it is).
+    private static func activateSession() async -> String? {
         // .playback keeps audio going with the silent switch on and the screen locked,
         // which matters with the phone on a music stand.
         let session = AVAudioSession.sharedInstance()
         do {
             try session.setCategory(.playback, mode: .default)
-            try session.setActive(true)
+            try await session.activate(options: [])
+            return nil
         } catch {
-            errorMessage = "Audio session error: \(error.localizedDescription)"
+            return "Audio session error: \(error.localizedDescription)"
         }
     }
 

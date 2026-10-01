@@ -10,16 +10,14 @@ An iPhone app that turns recorded singing lessons into study notes, a practice r
 
 Your teacher's feedback is the authority. Every prompt tells the model to organise and quote what the teacher said and never to add technique or advice of its own (`FeedbackAnalyst.principles` in `Packages/PassaggioCore/Sources/PassaggioCore/Notes/FeedbackAnalyst.swift`).
 
-> **Build status.** This code was written on a Windows machine without Xcode.
-> - `PassaggioCore` (chunking, transcript merging, response parsing, provider request/response handling, music math, routine planning, the backup archive format) compiles, and its 74 tests pass with Swift 6.4.
-> - The iOS app target, meaning the SwiftUI, SwiftData and AVFoundation code, passes a Swift syntax check but hasn't been type-checked or run yet.
+> **Build status.** The app builds with Xcode 27 and Swift 6.4, and `make test` passes: 74 `PassaggioCore` tests and 5 app tests on the simulator (backup round trip, rendering, clip export, Keychain). `VERIFY.md` is the on-device checklist for the parts tests can't cover, such as real API calls and the Voice Memos share route.
 >
-> Expect a round of compiler fixes on the first `make build-sim`. Send me the errors.
+> See [ROADMAP.md](ROADMAP.md) for planned features.
 
 ## Requirements
 
 - A Mac with Xcode 26 or later, and [XcodeGen](https://github.com/yonaskolb/XcodeGen) (`brew install xcodegen`).
-- iPhone 16 Pro on iOS 26 or later. The deployment target is set once in `project.yml` (`deploymentTarget.iOS`). `make doctor` checks it against your installed SDK. If your phone runs a newer iOS, you can raise the target to match.
+- iPhone 16 Pro on iOS 27 or later. The deployment target is set once in `project.yml` (`deploymentTarget.iOS`). `make doctor` checks it against your installed SDK. If your phone runs a newer iOS, you can raise the target to match.
 - A free Apple ID (Personal Team). No paid developer account is needed.
 - An OpenAI API key. An Anthropic key is optional.
 
@@ -89,7 +87,7 @@ Only transcription and the language-model calls cost money. Everything else, inc
 
 ## Known limitations
 
-- **Unverified build.** See the build status note above. The Voice Memos "Open in" route is also untested on a device.
+- **Voice Memos share route.** The "Open in Passaggio" route from Voice Memos hasn't been tested on a device. Route B through Files always works.
 - **Transcription of singing is unreliable.** That's why only teacher speech is used for key points. The transcript view still shows everything, including sung syllables.
 - **Speech over piano can be missed** or split into short segments. Speaker labels are only as good as your reference clips; re-mark them if labels look wrong.
 - **Output cap.** `gpt-4o-transcribe-diarize` returns at most 2,000 output tokens per request, and uploads are limited to 25 MB and about 1,400 s. The app cuts lessons into ~5-minute chunks at quiet points, overlaps them by 1.5 s, de-duplicates the overlap, and keeps timestamps continuous. If a response still hits the cap, that chunk is halved and re-sent automatically.

@@ -141,8 +141,10 @@ nonisolated enum AudioExport {
         try await session.export(to: destination, as: .m4a)
     }
 
-    /// Writes `range` of `source` as 16-bit PCM WAV. Used for speaker references,
-    /// which the transcription API takes as `data:audio/wav` URLs.
+    /// Writes `range` of `source` as 16 kHz mono 16-bit PCM WAV. Used for speaker
+    /// references, which the transcription API takes as base64 `data:audio/wav` form
+    /// fields capped at 1024 KB. Voice matching doesn't need more, and a 10 s clip
+    /// stays near 430 KB where a stereo 48 kHz one would be about 1.9 MB.
     @concurrent
     static func exportWAV(from source: URL, range: ClosedRange<TimeInterval>, to destination: URL) async throws {
         FileStore.removeIfPresent(destination)
@@ -152,10 +154,16 @@ nonisolated enum AudioExport {
         let endFrame = min(AVAudioFramePosition(range.upperBound * format.sampleRate), input.length)
         guard endFrame > startFrame else { throw ExportError.emptyRange }
 
+        let outputRate = 16_000.0
+        guard let outputFormat = AVAudioFormat(commonFormat: .pcmFormatFloat32, sampleRate: outputRate,
+                                               channels: 1, interleaved: false),
+              let converter = AVAudioConverter(from: format, to: outputFormat) else {
+            throw CocoaError(.fileWriteUnknown)
+        }
         let settings: [String: Any] = [
             AVFormatIDKey: kAudioFormatLinearPCM,
-            AVSampleRateKey: format.sampleRate,
-            AVNumberOfChannelsKey: format.channelCount,
+            AVSampleRateKey: outputRate,
+            AVNumberOfChannelsKey: 1,
             AVLinearPCMBitDepthKey: 16,
             AVLinearPCMIsFloatKey: false,
             AVLinearPCMIsBigEndianKey: false,
@@ -166,14 +174,50 @@ nonisolated enum AudioExport {
 
         input.framePosition = startFrame
         let blockSize: AVAudioFrameCount = 32_768
-        guard let buffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: blockSize) else {
+        guard let inBuffer = AVAudioPCMBuffer(pcmFormat: format, frameCapacity: blockSize),
+              let outBuffer = AVAudioPCMBuffer(
+                pcmFormat: outputFormat,
+                frameCapacity: AVAudioFrameCount(Double(blockSize) * outputRate / format.sampleRate) + 1024
+              ) else {
             throw CocoaError(.fileReadCorruptFile)
         }
-        while input.framePosition < endFrame {
-            let remaining = AVAudioFrameCount(endFrame - input.framePosition)
-            try input.read(into: buffer, frameCount: min(blockSize, remaining))
-            if buffer.frameLength == 0 { break }
-            try output.write(from: buffer)
-        }
+
+        // Feed the converter until the range is consumed, then signal end of stream so
+        // it flushes its resampler tail.
+        var readError: Error?
+        let status = { () -> AVAudioConverterOutputStatus in
+            var result = AVAudioConverterOutputStatus.haveData
+            while result == .haveData {
+                outBuffer.frameLength = 0
+                var error: NSError?
+                result = converter.convert(to: outBuffer, error: &error) { _, inputStatus in
+                    let remaining = AVAudioFrameCount(max(0, endFrame - input.framePosition))
+                    guard remaining > 0 else {
+                        inputStatus.pointee = .endOfStream
+                        return nil
+                    }
+                    do {
+                        try input.read(into: inBuffer, frameCount: min(blockSize, remaining))
+                    } catch {
+                        readError = error
+                        inputStatus.pointee = .endOfStream
+                        return nil
+                    }
+                    guard inBuffer.frameLength > 0 else {
+                        inputStatus.pointee = .endOfStream
+                        return nil
+                    }
+                    inputStatus.pointee = .haveData
+                    return inBuffer
+                }
+                if let error { readError = readError ?? error; return .error }
+                if outBuffer.frameLength > 0 {
+                    do { try output.write(from: outBuffer) } catch { readError = error; return .error }
+                }
+            }
+            return result
+        }()
+        if let readError { throw readError }
+        if status == .error { throw CocoaError(.fileWriteUnknown) }
     }
 }

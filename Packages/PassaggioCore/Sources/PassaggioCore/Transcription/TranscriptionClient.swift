@@ -21,6 +21,14 @@ public struct SpeakerReferenceClip: Sendable {
         "data:\(mimeType);base64,\(audio.base64EncodedString())"
     }
 
+    /// References travel as base64 form fields, and the API rejects any non-file part
+    /// over 1024 KB ("Part exceeded maximum size"). Kept a little under to leave headroom.
+    public static let maximumFormFieldBytes = 1_000_000
+
+    public var exceedsFormFieldLimit: Bool {
+        dataURL.utf8.count >= Self.maximumFormFieldBytes
+    }
+
     public static let allowedDuration: ClosedRange<TimeInterval> = 2...10
     public static let maximumCount = 4
 }

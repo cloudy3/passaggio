@@ -111,6 +111,19 @@ struct PassaggioAppTests {
         #expect(file.fileFormat.settings[AVFormatIDKey] as? UInt32 == kAudioFormatLinearPCM)
     }
 
+    @Test func referenceClipIsDownmixedToFitTheFormFieldLimit() async throws {
+        let spec = ExerciseSpec.passaggioFocus(.arpeggio)
+        let source = try await ExerciseRenderer.renderedFile(for: spec)
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("ref-\(UUID()).wav")
+        defer { FileStore.removeIfPresent(destination) }
+        try await AudioExport.exportWAV(from: source, range: 1...11, to: destination)
+        let file = try AVAudioFile(forReading: destination)
+        #expect(file.fileFormat.sampleRate == 16_000)
+        #expect(file.fileFormat.channelCount == 1)
+        let clip = SpeakerReferenceClip(name: "teacher", audio: try Data(contentsOf: destination))
+        #expect(!clip.exceedsFormFieldLimit)
+    }
+
     @Test func keychainRoundTrip() throws {
         let keychain = KeychainStore(service: "sg.cloudy3.passaggio.tests")
         try keychain.save("  sk-test-123 \n", for: .openAI)
