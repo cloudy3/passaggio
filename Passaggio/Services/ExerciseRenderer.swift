@@ -102,7 +102,7 @@ nonisolated enum ExerciseRenderer {
         guard let format = AVAudioFormat(standardFormatWithSampleRate: sampleRate, channels: 2) else {
             throw RenderError.renderFailed
         }
-        engine.connect(sampler, to: engine.mainMixerNode, format: format)
+        try engine.connectNode(sampler, to: engine.mainMixerNode, format: format)
         let maxFrames: AVAudioFrameCount = 1_024
         try engine.enableManualRenderingMode(.offline, format: format, maximumFrameCount: maxFrames)
         try sampler.loadSoundBankInstrument(

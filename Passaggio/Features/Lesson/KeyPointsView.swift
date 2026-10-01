@@ -158,15 +158,19 @@ struct SpeakerAssignmentSection: View {
         var label: String
         var sample: TranscriptSegment
         var count: Int
+        var role: SpeakerRole
         var id: String { label }
     }
 
     private var speakers: [SpeakerSummary] {
-        let groups = Dictionary(grouping: lesson.sortedSegments.filter { $0.role == .unknown }, by: \.speaker)
+        // Every speaker is listed, including ones already labelled, so a wrong label
+        // (say, the only speaker marked "Me") can be changed instead of leaving you stuck.
+        let groups = Dictionary(grouping: lesson.sortedSegments, by: \.speaker)
         return groups
             .compactMap { label, segments in
                 guard let longest = segments.max(by: { $0.text.count < $1.text.count }) else { return nil }
-                return SpeakerSummary(label: label, sample: longest, count: segments.count)
+                let role = segments.first?.role ?? .unknown
+                return SpeakerSummary(label: label, sample: longest, count: segments.count, role: role)
             }
             .sorted { $0.count > $1.count }
     }
@@ -175,7 +179,7 @@ struct SpeakerAssignmentSection: View {
         Section {
             ForEach(speakers) { speaker in
                 VStack(alignment: .leading, spacing: 8) {
-                    Text("Speaker \(speaker.label) · \(speaker.count) lines")
+                    Text("Speaker \(speaker.label) · \(speaker.count) \(speaker.count == 1 ? "line" : "lines")\(speaker.role == .unknown ? "" : " · \(speaker.role.displayName)")")
                         .font(.headline)
                     Button {
                         onShowInTranscript(speaker.sample)
@@ -218,6 +222,13 @@ struct SpeakerAssignmentSection: View {
             }
             .buttonStyle(.borderedProminent)
             .disabled(!lesson.segments.contains { $0.role == .teacher })
+            Button {
+                processor.process(lesson, context: context, retranscribe: true)
+            } label: {
+                Label("Transcribe Again", systemImage: "arrow.clockwise")
+                    .frame(maxWidth: .infinity, minHeight: 44)
+            }
+            .buttonStyle(.bordered)
         } header: {
             Text("Who is your teacher?")
         } footer: {
