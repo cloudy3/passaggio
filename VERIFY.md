@@ -8,7 +8,7 @@ The sample lesson contains two synthetic voices: the "teacher" gives three corre
 - [ ] `make bootstrap TEAM_ID=…` succeeds and `make doctor` reports the SDK is new enough.
 - [ ] `make test-core` passes.
 - [ ] `make build-sim` succeeds.
-- [ ] `make test` passes: app tests on the simulator (backup round trip, render, Keychain).
+- [ ] `make test` passes: app tests on the simulator (backup round trip, render, Keychain, help guide).
 - [ ] `make build-device TEAM_ID=…` succeeds, and Run from Xcode installs and launches on the phone.
 
 ## 1. Import and library
@@ -53,6 +53,7 @@ The sample lesson contains two synthetic voices: the "teacher" gives three corre
 ## 6. Settings
 - [ ] Switch the provider to Anthropic (add a key), then choose Find Key Points Again on a lesson: it works.
 - [ ] Remove Key: transcribing now shows "Add your OpenAI API key in Settings."
+- [ ] How to Use Passaggio: search "clip" finds Save a Practice Clip; an article reads each step as "Step 1: …" with VoiceOver and wraps cleanly at the largest text size.
 
 ## 7. Backup and restore
 - [ ] Back Up to Files: saves a `.passaggiobackup` file to iCloud Drive.

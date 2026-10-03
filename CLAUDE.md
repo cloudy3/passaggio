@@ -53,6 +53,7 @@ How the app fits together:
 - `Passaggio/Info.plist` is hand-maintained and contains explanatory comments. Xcode sometimes rewrites it (sorting keys, stripping comments, removing keys). Don't commit a rewrite like that; restore the commented version.
 - The bundle ID in `Config/Base.xcconfig` must never change: free-provisioning reinstalls rely on it to keep user data. The Team ID goes in the git-ignored `Config/Local.xcconfig`.
 - No entitlements file on purpose: Personal Team signing can't use iCloud, App Groups or push.
+- The in-app guide (Settings › How to Use Passaggio) is written in `Passaggio/Features/Help/HelpContent.swift` and quotes UI labels exactly. When you add or rename a feature, button or menu item, update the matching topic.
 
 ## Design
 

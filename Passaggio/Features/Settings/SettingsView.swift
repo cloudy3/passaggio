@@ -11,6 +11,16 @@ struct SettingsView: View {
         @Bindable var settings = settings
         NavigationStack {
             Form {
+                Section {
+                    NavigationLink {
+                        HelpView()
+                    } label: {
+                        Label("How to Use Passaggio", systemImage: "questionmark.circle")
+                    }
+                } footer: {
+                    Text("Step-by-step help for every feature.")
+                }
+
                 APIKeySection(account: .openAI, title: "OpenAI API Key",
                               footer: "Used for transcription (gpt-4o-transcribe-diarize) and, if selected below, key points and routines. Stored in the Keychain on this iPhone only.")
                 APIKeySection(account: .anthropic, title: "Anthropic API Key",

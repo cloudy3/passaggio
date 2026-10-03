@@ -187,4 +187,19 @@ struct PassaggioAppTests {
         defaults.set("gpt-6-luna", forKey: "openAIModel")
         #expect(AppSettings(defaults: defaults).model(for: .openAI) == "gpt-6-luna")
     }
+
+    @Test func helpTopicsAreCompleteAndSearchable() {
+        let topics = HelpTopic.all
+        #expect(Set(topics.map(\.id)).count == topics.count)
+        for topic in topics {
+            #expect(!topic.summary.isEmpty && !topic.steps.isEmpty, "\(topic.id) is incomplete")
+        }
+        for section in HelpSection.allCases {
+            #expect(topics.contains { $0.section == section }, "\(section) has no topics")
+        }
+        #expect(HelpTopic.matching(" ").count == topics.count)
+        #expect(HelpTopic.matching("SCREAMING").map(\.id).contains("screaming"))
+        #expect(HelpTopic.matching("save clip").map(\.id).contains("clip"))
+        #expect(HelpTopic.matching("xylophone").isEmpty)
+    }
 }
