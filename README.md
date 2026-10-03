@@ -10,7 +10,7 @@ An iPhone app that turns recorded singing lessons into study notes, a practice r
 
 Your teacher's feedback is the authority. Every prompt tells the model to organise and quote what the teacher said and never to add technique or advice of its own (`FeedbackAnalyst.principles(for:)` in `Packages/PassaggioCore/Sources/PassaggioCore/Notes/FeedbackAnalyst.swift`).
 
-> **Build status.** The app builds with Xcode 27 and Swift 6.4, and `make test` passes: 83 `PassaggioCore` tests and 8 app tests on the simulator (backup round trip, lesson styles, rendering, clip export, Keychain). `VERIFY.md` is the on-device checklist for the parts tests can't cover, such as real API calls and the Voice Memos share route.
+> **Build status.** The app builds with Xcode 27 and Swift 6.4, and `make test` passes: 83 `PassaggioCore` tests and 9 app tests on the simulator (backup round trip, lesson styles, rendering, clip export, Keychain, model settings). `VERIFY.md` is the on-device checklist for the parts tests can't cover, such as real API calls and the Voice Memos share route.
 >
 > See [ROADMAP.md](ROADMAP.md) for planned features.
 
@@ -60,7 +60,7 @@ The lesson date comes from the recording's embedded creation date (Voice Memos w
 
 **Settings › OpenAI API Key**: paste the key and tap **Save to Keychain**. The key is stored with `kSecAttrAccessibleAfterFirstUnlockThisDeviceOnly`. It never appears in source code or UserDefaults and isn't included in backups, so re-enter it after restoring to another phone.
 
-Transcription always uses OpenAI. For key points and routines you can choose **OpenAI** (default model `gpt-5.6-luna`) or **Anthropic** (default model `claude-opus-5`, which needs an Anthropic key). Both model names are editable. The defaults were checked against each provider's docs in September 2026.
+Transcription always uses OpenAI. For key points and routines you can choose **OpenAI** (default model `gpt-6.1-sol`) or **Anthropic** (default model `claude-opus-5`, which needs an Anthropic key). Both model names are editable. The defaults were checked against each provider’s docs in October 2026. If you had saved an earlier default in Settings, it moves to the new one; a model name you typed yourself is kept.
 
 ## Mark your voices once
 

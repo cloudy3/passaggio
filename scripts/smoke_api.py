@@ -29,7 +29,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parent.parent
 FIXTURES = ROOT / "Fixtures"
 TEST_FIXTURES = ROOT / "Packages/PassaggioCore/Tests/PassaggioCoreTests/Fixtures"
-OPENAI_TEXT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-5.6-luna")
+OPENAI_TEXT_MODEL = os.environ.get("OPENAI_MODEL", "gpt-6.1-sol")
 ANTHROPIC_MODEL = os.environ.get("ANTHROPIC_MODEL", "claude-opus-5")
 
 SCHEMA = {

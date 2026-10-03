@@ -34,10 +34,10 @@ public enum LLMProviderKind: String, CaseIterable, Codable, Sendable, Identifiab
         }
     }
 
-    /// Defaults checked against provider docs in September 2026. Editable in Settings.
+    /// Defaults checked against provider docs in October 2026. Editable in Settings.
     public var defaultModel: String {
         switch self {
-        case .openAI: "gpt-5.6-luna"
+        case .openAI: "gpt-6.1-sol"
         case .anthropic: "claude-opus-5"
         }
     }

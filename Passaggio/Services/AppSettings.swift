@@ -22,8 +22,21 @@ final class AppSettings {
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         provider = defaults.string(forKey: Keys.provider).flatMap(LLMProviderKind.init(rawValue:)) ?? .openAI
-        openAIModel = defaults.string(forKey: Keys.openAIModel) ?? LLMProviderKind.openAI.defaultModel
-        anthropicModel = defaults.string(forKey: Keys.anthropicModel) ?? LLMProviderKind.anthropic.defaultModel
+        openAIModel = Self.storedModel(.openAI, key: Keys.openAIModel, in: defaults)
+        anthropicModel = Self.storedModel(.anthropic, key: Keys.anthropicModel, in: defaults)
+    }
+
+    /// Defaults earlier versions shipped. A saved value equal to one of these was the
+    /// default at the time rather than a choice, so it moves to the current default.
+    private static let retiredDefaults: [LLMProviderKind: Set<String>] = [
+        .openAI: ["gpt-5.6-luna"],
+    ]
+
+    private static func storedModel(_ kind: LLMProviderKind, key: String, in defaults: UserDefaults) -> String {
+        guard let stored = defaults.string(forKey: key) else { return kind.defaultModel }
+        guard retiredDefaults[kind]?.contains(stored) == true else { return stored }
+        defaults.removeObject(forKey: key)
+        return kind.defaultModel
     }
 
     func model(for kind: LLMProviderKind) -> String {

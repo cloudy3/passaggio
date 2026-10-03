@@ -172,4 +172,19 @@ struct PassaggioAppTests {
         try keychain.delete(.openAI)
         #expect(keychain.read(.openAI) == nil)
     }
+
+    @Test func savedOldDefaultModelMovesToTheNewDefault() throws {
+        let suite = "PassaggioTests.modelDefaults"
+        let defaults = try #require(UserDefaults(suiteName: suite))
+        defer { defaults.removePersistentDomain(forName: suite) }
+
+        defaults.set("gpt-5.6-luna", forKey: "openAIModel")
+        defaults.set("claude-sonnet-5-5", forKey: "anthropicModel")
+        let settings = AppSettings(defaults: defaults)
+        #expect(settings.model(for: .openAI) == LLMProviderKind.openAI.defaultModel)
+        #expect(settings.model(for: .anthropic) == "claude-sonnet-5-5")
+
+        defaults.set("gpt-6-luna", forKey: "openAIModel")
+        #expect(AppSettings(defaults: defaults).model(for: .openAI) == "gpt-6-luna")
+    }
 }
