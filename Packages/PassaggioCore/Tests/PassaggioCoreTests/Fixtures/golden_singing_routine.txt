@@ -1,0 +1,16 @@
+SYSTEM:
+You help a singing student organise feedback from their private voice teacher. The teacher's feedback is the only authority. Never add vocal technique, pedagogy, exercises or advice the teacher did not give, never contradict the teacher, and never "improve" on what they said. Keep the teacher's own words and imagery wherever you can. If something the teacher said is ambiguous, keep it ambiguous rather than guessing. The student is a male singer working on finding and strengthening his mixed voice and on removing bad habits.
+
+USER:
+Write one practice exercise for each focus slot below, in the same order. Each exercise must work on exactly the teacher's feedback for that slot. Use an exercise the teacher assigned if the quotes mention one. Otherwise, the exercise is to sing one of the available practice tracks (or the student's repertoire) while applying the teacher's correction, described in the teacher's words. Do not invent new techniques. Only attach a track when it suits the slot; lesson clips are recordings of the teacher, so prefer them when their name matches the slot.
+
+Focus slots:
+[0] 10 min — Registration and mix: Mix before C4 (raised in 3 lesson(s)). Teacher said: “Let it tip over earlier” / “Don't haul chest up”
+[1] 5 min — Tension and bad habits: Jaw clamp (raised in 1 lesson(s)). Teacher said: “Keep the jaw loose”
+
+Available practice tracks:
+- preset:passaggio-5: Passaggio · 5-note scale — Generated piano track: 5-note scale, D#2–G#4, 90 BPM
+- clip:nay: Nay slides — Recording of the teacher from the lesson on 1 Sep 2026, 40 s
+
+SCHEMA practice_routine:
+{"additionalProperties":false,"properties":{"exercises":{"items":{"additionalProperties":false,"properties":{"goal":{"description":"What success sounds or feels like, as the teacher described it.","type":"string"},"instructions":{"description":"What to do, drawn only from the teacher's words (2–4 sentences).","type":"string"},"slot":{"description":"Number of the focus slot this exercise covers.","type":"integer"},"title":{"description":"Short exercise title.","type":"string"},"track_id":{"description":"Id of the practice track to use, or an empty string.","type":"string"}},"required":["goal","instructions","slot","title","track_id"],"type":"object"},"type":"array"}},"required":["exercises"],"type":"object"}

@@ -3,14 +3,14 @@
 An iPhone app that turns recorded singing lessons into study notes, a practice routine and practice audio.
 
 - **Lessons**: import Voice Memos recordings, play them back on a scrubbable waveform, and keep notes per lesson.
-- **Key points**: the lesson is transcribed with speaker labels (OpenAI `gpt-4o-transcribe-diarize`). Only your teacher's speech goes to a language model, which pulls out their feedback and groups it into seven themes (breath support, registration and mix, placement and resonance, vowels, tension and bad habits, range, repertoire). Tapping a point plays the lesson from that moment.
+- **Key points**: the lesson is transcribed with speaker labels (OpenAI `gpt-4o-transcribe-diarize`). Only your teacher's speech goes to a language model, which pulls out their feedback and groups it into seven themes (breath support, registration and mix, placement and resonance, vowels, tension and bad habits, range, repertoire). Tapping a point plays the lesson from that moment. A lesson's **Style** (Details tab) is Singing by default. Set it to Screaming for harsh-vocals lessons: they add an eighth theme, distortion and texture, and treat constriction or distortion the teacher asks for as technique, not a bad habit. Singing lessons get exactly the same prompts either way, and the two styles keep separate recurring topics.
 - **Insights**: shows which corrections recur across lessons, most-repeated first.
 - **Practice**: builds 15-, 30- or 45-minute routines weighted toward recurring and recent feedback. Each exercise is linked to the moments your teacher said it and can carry a practice track. There's a full-screen practice mode with a timer, and you can mark sessions done.
 - **Tracks**: a piano exercise generator on the phone (scales, arpeggios, octave slides and custom sequences; a root-chord cue before each repetition; presets for your D#2–G#4 range and the C4–F#4 passaggio). Also looping clips cut from lessons, typically your teacher playing an exercise.
 
-Your teacher's feedback is the authority. Every prompt tells the model to organise and quote what the teacher said and never to add technique or advice of its own (`FeedbackAnalyst.principles` in `Packages/PassaggioCore/Sources/PassaggioCore/Notes/FeedbackAnalyst.swift`).
+Your teacher's feedback is the authority. Every prompt tells the model to organise and quote what the teacher said and never to add technique or advice of its own (`FeedbackAnalyst.principles(for:)` in `Packages/PassaggioCore/Sources/PassaggioCore/Notes/FeedbackAnalyst.swift`).
 
-> **Build status.** The app builds with Xcode 27 and Swift 6.4, and `make test` passes: 74 `PassaggioCore` tests and 5 app tests on the simulator (backup round trip, rendering, clip export, Keychain). `VERIFY.md` is the on-device checklist for the parts tests can't cover, such as real API calls and the Voice Memos share route.
+> **Build status.** The app builds with Xcode 27 and Swift 6.4, and `make test` passes: 83 `PassaggioCore` tests and 8 app tests on the simulator (backup round trip, lesson styles, rendering, clip export, Keychain). `VERIFY.md` is the on-device checklist for the parts tests can't cover, such as real API calls and the Voice Memos share route.
 >
 > See [ROADMAP.md](ROADMAP.md) for planned features.
 

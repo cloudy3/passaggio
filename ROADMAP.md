@@ -26,7 +26,7 @@ A screen to open before a lesson, with:
 - how often you practised each item since then;
 - which topics keep coming back.
 
-This needs no language model, because it only aggregates existing data. That keeps it within the rule that the teacher is the authority (`FeedbackAnalyst.principles`).
+This needs no language model, because it only aggregates existing data. That keeps it within the rule that the teacher is the authority (`FeedbackAnalyst.principles(for:)`).
 
 ## 4. Smaller improvements
 

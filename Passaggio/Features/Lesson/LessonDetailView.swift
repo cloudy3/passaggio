@@ -157,6 +157,8 @@ struct LessonDetailView: View {
 struct LessonDetailsForm: View {
     @Bindable var lesson: Lesson
     @Environment(\.modelContext) private var context
+    @Environment(LessonProcessor.self) private var processor
+    @State private var styleChanged = false
 
     var body: some View {
         Form {
@@ -167,6 +169,23 @@ struct LessonDetailsForm: View {
                     Text(Duration.seconds(lesson.duration), format: .time(pattern: .hourMinuteSecond))
                 }
             }
+            Section {
+                Picker("Style", selection: $lesson.style) {
+                    ForEach(LessonStyle.allCases) { Text($0.displayName).tag($0) }
+                }
+                // Key points already found were made for the old style.
+                if styleChanged && !lesson.segments.isEmpty {
+                    Button("Find Key Points Again", systemImage: "sparkles") {
+                        styleChanged = false
+                        try? context.save()
+                        processor.reanalyze(lesson, context: context)
+                    }
+                    .disabled(processor.isRunning(lesson))
+                }
+            } footer: {
+                Text("Screaming lessons add a “Distortion and texture” theme, and treat constriction or distortion your teacher asks for as technique, not a bad habit.")
+            }
+            .onChange(of: lesson.style) { styleChanged = true }
             Section("My Notes") {
                 TextField("Notes about this lesson", text: $lesson.notes, axis: .vertical)
                     .lineLimit(4...12)
@@ -192,6 +211,24 @@ struct LessonDetailsForm: View {
     NavigationStack {
         if let lesson = lessons.first(where: { $0.status == .analyzed }) {
             LessonDetailView(lesson: lesson)
+        }
+    }
+}
+
+#Preview("Screaming lesson", traits: .sampleData) {
+    @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
+    NavigationStack {
+        if let lesson = lessons.first(where: { $0.style == .screaming }) {
+            LessonDetailView(lesson: lesson)
+        }
+    }
+}
+
+#Preview("Lesson details, screaming", traits: .sampleData) {
+    @Previewable @Query(sort: \Lesson.date, order: .reverse) var lessons: [Lesson]
+    NavigationStack {
+        if let lesson = lessons.first(where: { $0.style == .screaming }) {
+            LessonDetailsForm(lesson: lesson)
         }
     }
 }

@@ -29,6 +29,8 @@ final class Lesson {
     @Attribute(.externalStorage) var waveformData: Data
     var statusRaw: String
     var lastError: String?
+    /// `LessonStyle`. Declared with a default so lessons saved before it existed migrate as singing.
+    var styleRaw: String = LessonStyle.singing.rawValue
 
     @Relationship(deleteRule: .cascade, inverse: \TranscriptSegment.lesson)
     var segments: [TranscriptSegment] = []
@@ -52,6 +54,11 @@ final class Lesson {
     var status: ProcessingStatus {
         get { ProcessingStatus(rawValue: statusRaw) ?? .imported }
         set { statusRaw = newValue.rawValue }
+    }
+
+    var style: LessonStyle {
+        get { LessonStyle(rawValue: styleRaw) ?? .singing }
+        set { styleRaw = newValue.rawValue }
     }
 
     var fileURL: URL { FileStore.recordings.appendingPathComponent(fileName) }
@@ -157,6 +164,9 @@ final class FeedbackTopic {
     }
 
     var lastSeen: Date? { lessons.first?.date }
+
+    /// Topics only collect points from lessons of one style (see `LessonProcessor.analyze`).
+    var style: LessonStyle { keyPoints.lazy.compactMap(\.lesson).first?.style ?? .singing }
 
     /// Key points newest lesson first.
     var sortedKeyPoints: [KeyPoint] {

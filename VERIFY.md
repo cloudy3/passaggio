@@ -27,6 +27,9 @@ The sample lesson contains two synthetic voices: the "teacher" gives three corre
 - [ ] Key points appear under Registration and mix (chest/C), Tension and bad habits (jaw), and Breath support (support). Tapping each plays from just before the correction.
 - [ ] The long fixture transcribes in two chunks (the progress shows two ranges). Its transcript timestamps run continuously to about 8:00, with no duplicated lines at the ~5:00 cut.
 - [ ] Transcript tab: tapping a line plays from it; "Teacher only" filters.
+- [ ] After updating from a build without lesson styles, every existing lesson's Details tab shows Style: Singing, and its key points are unchanged.
+- [ ] On a screaming lesson, Details › Style › Screaming shows "Find Key Points Again"; running it files distortion cues (false-cord, fry, grit) under Distortion and texture, not Tension and bad habits.
+- [ ] Insights: the mixed-voice topics and their counts are the same as before analysing the screaming lesson.
 
 ## 3. Insights
 - [ ] After both fixtures are analysed, Insights › Recurring lists the repeated corrections with a count of 2×.
@@ -53,5 +56,5 @@ The sample lesson contains two synthetic voices: the "teacher" gives three corre
 
 ## 7. Backup and restore
 - [ ] Back Up to Files: saves a `.passaggiobackup` file to iCloud Drive.
-- [ ] Delete the app, reinstall from Xcode, then Restore from Backup: lessons, audio, key points, insights, routines, clips, presets and voice samples all return. Re-enter the API key.
+- [ ] Delete the app, reinstall from Xcode, then Restore from Backup: lessons, audio, key points, insights, routines, clips, presets and voice samples all return, and screaming lessons are still marked Screaming. Re-enter the API key.
 - [ ] After the 7-day expiry, press Run in Xcode again: the data is still there.

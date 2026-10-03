@@ -5,8 +5,8 @@ import FoundationNetworking
 @testable import PassaggioCore
 
 enum Fixture {
-    static func data(_ name: String) throws -> Data {
-        guard let url = Bundle.module.url(forResource: name, withExtension: "json", subdirectory: "Fixtures") else {
+    static func data(_ name: String, extension ext: String = "json") throws -> Data {
+        guard let url = Bundle.module.url(forResource: name, withExtension: ext, subdirectory: "Fixtures") else {
             throw CocoaError(.fileNoSuchFile, userInfo: [NSFilePathErrorKey: name])
         }
         return try Data(contentsOf: url)
@@ -38,6 +38,36 @@ struct StubLLM: LLMProvider {
     var reply: Data
     var displayName: String { "Stub" }
     func generateJSON(system: String, user: String, output: StructuredOutput) async throws -> Data { reply }
+}
+
+/// Like `StubLLM`, but also records every request, so tests can check exactly what
+/// the model would be sent.
+final class RecordingLLM: LLMProvider, @unchecked Sendable {
+    struct Request {
+        var system: String
+        var user: String
+        var output: StructuredOutput
+
+        /// System prompt, user prompt and schema as one comparable text.
+        func transcript() throws -> String {
+            let schema = String(decoding: try output.schema.encoded(), as: UTF8.self)
+            return "SYSTEM:\n\(system)\n\nUSER:\n\(user)\n\nSCHEMA \(output.name):\n\(schema)\n"
+        }
+    }
+
+    private let lock = NSLock()
+    private let reply: Data
+    private(set) var requests: [Request] = []
+    var displayName: String { "Recording" }
+
+    init(reply: String) {
+        self.reply = Data(reply.utf8)
+    }
+
+    func generateJSON(system: String, user: String, output: StructuredOutput) async throws -> Data {
+        lock.withLock { requests.append(Request(system: system, user: user, output: output)) }
+        return reply
+    }
 }
 
 func segment(_ start: Double, _ end: Double, _ speaker: String = "teacher", _ text: String = "text") -> DiarizedTranscription.Segment {

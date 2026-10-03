@@ -170,6 +170,8 @@ nonisolated struct BackupPayload: Codable, Sendable {
     struct LessonDTO: Codable, Sendable {
         var id: UUID, title: String, date: Date, duration: TimeInterval, notes: String
         var fileName: String, importedAt: Date, waveform: Data, status: String, lastError: String?
+        /// Missing from backups made before lesson styles existed; those restore as singing.
+        var style: String?
         var segments: [SegmentDTO], keyPoints: [KeyPointDTO], clips: [ClipDTO]
     }
     struct TopicDTO: Codable, Sendable {
@@ -215,6 +217,7 @@ extension BackupPayload {
                 id: lesson.id, title: lesson.title, date: lesson.date, duration: lesson.duration,
                 notes: lesson.notes, fileName: lesson.fileName, importedAt: lesson.importedAt,
                 waveform: lesson.waveformData, status: lesson.statusRaw, lastError: lesson.lastError,
+                style: lesson.styleRaw,
                 segments: lesson.sortedSegments.map {
                     SegmentDTO(start: $0.start, end: $0.end, speaker: $0.speaker, role: $0.roleRaw, text: $0.text)
                 },
@@ -268,6 +271,7 @@ extension BackupPayload {
             lesson.importedAt = dto.importedAt
             lesson.statusRaw = dto.status
             lesson.lastError = dto.lastError
+            lesson.styleRaw = dto.style ?? LessonStyle.singing.rawValue
             context.insert(lesson)
 
             for segment in dto.segments {

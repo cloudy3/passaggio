@@ -37,7 +37,8 @@ enum RoutineGenerator {
                 topicTitle: topic.title,
                 quotes: topic.sortedKeyPoints.map { $0.quote.isEmpty ? $0.summary : $0.quote },
                 minutes: slot.minutes,
-                occurrences: topic.lessons.count
+                occurrences: topic.lessons.count,
+                style: topic.style
             )
         }
 

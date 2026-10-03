@@ -116,12 +116,63 @@ struct FeedbackAnalystTests {
         #expect(try await analyst.extractKeyPoints(from: []).isEmpty)
     }
 
-    @Test func promptContainsOnlyGivenLinesAndAllThemes() {
+    @Test func promptContainsOnlyGivenLinesAndTheStylesThemes() {
         let prompt = FeedbackAnalyst.keyPointPrompt(teacherSegments: teacherLines)
         #expect(prompt.contains("[1] (0:15) You're pushing chest too high around the C."))
-        for theme in Theme.allCases {
+        for theme in Theme.available(for: .singing) {
             #expect(prompt.contains(theme.rawValue))
         }
+        #expect(!prompt.contains(Theme.distortion.rawValue))
+    }
+
+    @Test func singingLessonsKeepTheOriginalSevenThemes() {
+        #expect(Theme.available(for: .singing) == [
+            .breathSupport, .registrationMix, .placementResonance, .vowels, .tensionHabits, .range, .repertoire,
+        ])
+        #expect(Theme.available(for: .screaming) == Theme.allCases)
+    }
+
+    @Test func screamingKeyPointRequestOffersDistortion() async throws {
+        let llm = RecordingLLM(reply: #"{"points":[]}"#)
+        _ = try await FeedbackAnalyst(provider: llm).extractKeyPoints(from: teacherLines, style: .screaming)
+        let request = try #require(llm.requests.first)
+        #expect(request.system.contains("This is one of the screaming lessons."))
+        #expect(request.user.contains("singing, screaming and piano"))
+        #expect(request.user.contains("- distortion: distortion and texture: false-cord"))
+        #expect(request.user.contains("belongs under distortion"))
+        #expect(request.output.schema["properties"]?["points"]?["items"]?["properties"]?["theme"]?["enum"]?.arrayValue?.contains("distortion") == true)
+    }
+
+    @Test func screamingTopicRequestUsesScreamingPrinciples() async throws {
+        let llm = RecordingLLM(reply: #"{"assignments":[]}"#)
+        let point = ExtractedKeyPoint(theme: .distortion, summary: "More false-cord on the scream", quote: "", timestamp: 0)
+        _ = try await FeedbackAnalyst(provider: llm).assignTopics(points: [point], existing: [], style: .screaming)
+        #expect(llm.requests.first?.system.contains("This is one of the screaming lessons.") == true)
+    }
+
+    @Test func distortionIsDroppedFromSingingLessons() throws {
+        let reply = Data("""
+        {"points":[{"theme":"distortion","summary":"Add grit","quote":"grit","segment":0},
+                   {"theme":"vowels","summary":"Narrow the ah","quote":"ah","segment":1}]}
+        """.utf8)
+        let singing = try FeedbackAnalyst.parseKeyPoints(reply, teacherSegments: teacherLines, style: .singing)
+        #expect(singing.map(\.theme) == [.vowels])
+        let screaming = try FeedbackAnalyst.parseKeyPoints(reply, teacherSegments: teacherLines, style: .screaming)
+        #expect(screaming.map(\.theme) == [.distortion, .vowels])
+    }
+
+    @Test func routineWithAScreamingSlotTagsItAndDescribesBothStyles() async throws {
+        let slots = [
+            RoutineSlotContext(theme: .registrationMix, topicTitle: "Mix before C4", quotes: ["Let it tip over earlier"], minutes: 10, occurrences: 3),
+            RoutineSlotContext(theme: .distortion, topicTitle: "False-cord rattle", quotes: ["Let the rattle sit on top"], minutes: 5, occurrences: 1, style: .screaming),
+        ]
+        let llm = RecordingLLM(reply: #"{"exercises":[]}"#)
+        _ = try await FeedbackAnalyst(provider: llm).draftRoutine(slots: slots, tracks: [])
+        let request = try #require(llm.requests.first)
+        #expect(request.system.contains("also takes screaming lessons"))
+        #expect(request.system.hasPrefix(FeedbackAnalyst.teacherAuthority))
+        #expect(request.user.contains("[0] 10 min — Registration and mix"))
+        #expect(request.user.contains("[1] [Screaming lesson] 5 min — Distortion and texture"))
     }
 
     @Test func topicAssignmentsResolveIDsAndFallBackLocally() throws {

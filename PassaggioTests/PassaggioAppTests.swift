@@ -29,6 +29,7 @@ struct PassaggioAppTests {
     @Test func backupPayloadRoundTripsEveryRelationship() throws {
         let source = try makeContext()
         let lesson = Lesson(title: "Lesson 1", date: .now, duration: 120, fileName: "a.m4a", waveform: [0, 0.5, 1])
+        lesson.style = .screaming
         source.insert(lesson)
         let segment = TranscriptSegment(start: 1, end: 2, speaker: "teacher", role: .teacher, text: "Lift the palate.")
         source.insert(segment)
@@ -69,6 +70,7 @@ struct PassaggioAppTests {
         let restoredLesson = try #require(try target.fetch(FetchDescriptor<Lesson>()).first)
         #expect(restoredLesson.id == lesson.id)
         #expect(restoredLesson.waveform == [0, 0.5, 1])
+        #expect(restoredLesson.style == .screaming)
         #expect(restoredLesson.segments.count == 1)
         #expect(restoredLesson.keyPoints.first?.topic?.title == "Lift the soft palate")
         #expect(restoredLesson.clips.first?.name == "Lip trill")
@@ -79,6 +81,43 @@ struct PassaggioAppTests {
         #expect(restoredExercise.sourceKeyPoints.first?.id == point.id)
         #expect(restoredExercise.topic?.id == topic.id)
         #expect(restoredExercise.trackReference == clip.trackReference)
+    }
+
+    @Test func backupsFromBeforeLessonStylesRestoreAsSinging() throws {
+        let source = try makeContext()
+        let lesson = Lesson(title: "Lesson 1", date: .now, duration: 120, fileName: "a.m4a", waveform: [])
+        lesson.style = .screaming
+        source.insert(lesson)
+        try source.save()
+
+        // Strip the key, as a backup written by an older build wouldn't have it.
+        let encoder = JSONEncoder()
+        encoder.dateEncodingStrategy = .iso8601
+        var json = try #require(JSONSerialization.jsonObject(with: encoder.encode(BackupPayload(context: source))) as? [String: Any])
+        var lessons = try #require(json["lessons"] as? [[String: Any]])
+        lessons[0]["style"] = nil
+        json["lessons"] = lessons
+        let decoder = JSONDecoder()
+        decoder.dateDecodingStrategy = .iso8601
+        let decoded = try decoder.decode(BackupPayload.self, from: JSONSerialization.data(withJSONObject: json))
+
+        let target = try makeContext()
+        decoded.insert(into: target)
+        try target.save()
+        #expect(try target.fetch(FetchDescriptor<Lesson>()).first?.style == .singing)
+    }
+
+    @Test func topicStyleFollowsItsLessons() throws {
+        let context = try makeContext()
+        let lesson = Lesson(title: "Screams", date: .now, duration: 60, fileName: "s.m4a", waveform: [])
+        lesson.style = .screaming
+        let topic = FeedbackTopic(theme: .distortion, title: "Rattle on top")
+        let point = KeyPoint(theme: .distortion, summary: "Rattle on top", quote: "", timestamp: 0)
+        for model in [lesson, topic, point] as [any PersistentModel] { context.insert(model) }
+        point.lesson = lesson
+        point.topic = topic
+        #expect(topic.style == .screaming)
+        #expect(FeedbackTopic(theme: .vowels, title: "No points yet").style == .singing)
     }
 
     @Test func rendersAnAudibleExerciseOfTheExpectedLength() async throws {

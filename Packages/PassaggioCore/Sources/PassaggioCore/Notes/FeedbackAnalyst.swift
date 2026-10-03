@@ -61,13 +61,16 @@ public struct RoutineSlotContext: Hashable, Sendable {
     public var quotes: [String]
     public var minutes: Int
     public var occurrences: Int
+    /// The kind of lesson the topic comes from.
+    public var style: LessonStyle
 
-    public init(theme: Theme, topicTitle: String, quotes: [String], minutes: Int, occurrences: Int) {
+    public init(theme: Theme, topicTitle: String, quotes: [String], minutes: Int, occurrences: Int, style: LessonStyle = .singing) {
         self.theme = theme
         self.topicTitle = topicTitle
         self.quotes = quotes
         self.minutes = minutes
         self.occurrences = occurrences
+        self.style = style
     }
 }
 
@@ -81,66 +84,103 @@ public struct FeedbackAnalyst: Sendable {
         self.provider = provider
     }
 
-    /// Shared by every prompt. The teacher is the authority; the app only organises.
-    static let principles = """
+    /// Opens every prompt. The teacher is the authority; the app only organises.
+    static let teacherAuthority = """
     You help a singing student organise feedback from their private voice teacher. \
     The teacher's feedback is the only authority. Never add vocal technique, pedagogy, \
     exercises or advice the teacher did not give, never contradict the teacher, and never \
     "improve" on what they said. Keep the teacher's own words and imagery wherever you can. \
-    If something the teacher said is ambiguous, keep it ambiguous rather than guessing. \
+    If something the teacher said is ambiguous, keep it ambiguous rather than guessing.
+    """
+
+    static let singingStudent = """
     The student is a male singer working on finding and strengthening his mixed voice and on \
     removing bad habits.
     """
 
-    // MARK: Key points
+    static let screamingStudent = """
+    The student is a male singer who works on his mixed voice in singing lessons and also \
+    takes screaming lessons (harsh vocals such as distortion, fry and false-cord screams). \
+    This is one of the screaming lessons. Constriction, rasp, grit or distortion the teacher \
+    asks for is technique, not a bad habit, unless the teacher says it is a problem.
+    """
 
-    static var themeGuide: String {
-        Theme.allCases.map { "- \($0.rawValue): \($0.promptDefinition)" }.joined(separator: "\n")
+    /// The system prompt for work on one lesson (key points and topics).
+    static func principles(for style: LessonStyle) -> String {
+        switch style {
+        case .singing: "\(teacherAuthority) \(singingStudent)"
+        case .screaming: "\(teacherAuthority) \(screamingStudent)"
+        }
     }
 
-    static let keyPointSchema = StructuredOutput(
-        name: "lesson_key_points",
-        schema: Schema.object([
-            "points": Schema.array(Schema.object([
-                "theme": Schema.enumeration(Theme.allCases.map(\.rawValue)),
-                "summary": Schema.string("The feedback as a short instruction to the student, in the teacher's terms."),
-                "quote": Schema.string("A short verbatim excerpt of the teacher's words that carries this point."),
-                "segment": Schema.integer("The number of the transcript line where the teacher gives this feedback."),
-            ])),
-        ])
-    )
+    /// The system prompt for a routine. A routine without screaming topics gets exactly
+    /// the singing prompt.
+    static func routinePrinciples(for slots: [RoutineSlotContext]) -> String {
+        guard slots.contains(where: { $0.style == .screaming }) else { return principles(for: .singing) }
+        return """
+        \(teacherAuthority) The student is a male singer working on finding and strengthening \
+        his mixed voice and on removing bad habits, and also takes screaming lessons (harsh \
+        vocals such as distortion, fry and false-cord screams). Focus slots marked \
+        \(screamingSlotTag) come from screaming lessons: there, constriction, rasp, grit or \
+        distortion the teacher asks for is technique, not a bad habit, unless the teacher says \
+        it is a problem.
+        """
+    }
 
-    static func keyPointPrompt(teacherSegments: [TimedSegment]) -> String {
+    static let screamingSlotTag = "[Screaming lesson]"
+
+    // MARK: Key points
+
+    static func themeGuide(for style: LessonStyle) -> String {
+        Theme.available(for: style).map { "- \($0.rawValue): \($0.promptDefinition(for: style))" }.joined(separator: "\n")
+    }
+
+    static func keyPointSchema(for style: LessonStyle) -> StructuredOutput {
+        StructuredOutput(
+            name: "lesson_key_points",
+            schema: Schema.object([
+                "points": Schema.array(Schema.object([
+                    "theme": Schema.enumeration(Theme.available(for: style).map(\.rawValue)),
+                    "summary": Schema.string("The feedback as a short instruction to the student, in the teacher's terms."),
+                    "quote": Schema.string("A short verbatim excerpt of the teacher's words that carries this point."),
+                    "segment": Schema.integer("The number of the transcript line where the teacher gives this feedback."),
+                ])),
+            ])
+        )
+    }
+
+    static func keyPointPrompt(teacherSegments: [TimedSegment], style: LessonStyle = .singing) -> String {
         let lines = teacherSegments.enumerated().map { index, segment in
             "[\(index)] (\(formatTimestamp(segment.start))) \(segment.text)"
         }
+        let removed = style == .screaming ? "singing, screaming and piano" : "singing and piano"
         return """
         Below is everything the teacher said in one lesson, as numbered lines. The recording also \
-        contained singing and piano, which were removed; some lines may be fragments or \
+        contained \(removed), which were removed; some lines may be fragments or \
         mis-transcribed lyrics.
 
         Extract each distinct piece of feedback or instruction the teacher gave the student. \
         Skip greetings, scheduling, small talk, counting-in and lyrics. Merge repeats of the same \
         point within this lesson into one entry, pointing at the line where it is first given \
         most clearly. Classify each point into exactly one theme:
-        \(themeGuide)
+        \(themeGuide(for: style))
 
         Teacher's lines:
         \(lines.joined(separator: "\n"))
         """
     }
 
-    public func extractKeyPoints(from teacherSegments: [TimedSegment]) async throws -> [ExtractedKeyPoint] {
+    public func extractKeyPoints(from teacherSegments: [TimedSegment], style: LessonStyle = .singing) async throws -> [ExtractedKeyPoint] {
         guard !teacherSegments.isEmpty else { return [] }
         let data = try await provider.generateJSON(
-            system: Self.principles,
-            user: Self.keyPointPrompt(teacherSegments: teacherSegments),
-            output: Self.keyPointSchema
+            system: Self.principles(for: style),
+            user: Self.keyPointPrompt(teacherSegments: teacherSegments, style: style),
+            output: Self.keyPointSchema(for: style)
         )
-        return try Self.parseKeyPoints(data, teacherSegments: teacherSegments)
+        return try Self.parseKeyPoints(data, teacherSegments: teacherSegments, style: style)
     }
 
-    static func parseKeyPoints(_ data: Data, teacherSegments: [TimedSegment]) throws -> [ExtractedKeyPoint] {
+    static func parseKeyPoints(_ data: Data, teacherSegments: [TimedSegment], style: LessonStyle = .singing) throws -> [ExtractedKeyPoint] {
         struct Response: Decodable {
             struct Point: Decodable { var theme: String; var summary: String; var quote: String; var segment: Int }
             var points: [Point]
@@ -151,10 +191,11 @@ public struct FeedbackAnalyst: Sendable {
         } catch {
             throw APIError.decoding(String(describing: error))
         }
+        let themes = Theme.available(for: style)
         return response.points.compactMap { point in
             // Drop anything we can't anchor to a real line: the timestamp jump is the
             // point of the feature, and an invented index would jump somewhere wrong.
-            guard let theme = Theme(rawValue: point.theme),
+            guard let theme = Theme(rawValue: point.theme), themes.contains(theme),
                   teacherSegments.indices.contains(point.segment) else { return nil }
             let summary = point.summary.trimmingCharacters(in: .whitespacesAndNewlines)
             guard !summary.isEmpty else { return nil }
@@ -203,10 +244,11 @@ public struct FeedbackAnalyst: Sendable {
         """
     }
 
-    public func assignTopics(points: [ExtractedKeyPoint], existing: [TopicCandidate]) async throws -> [TopicAssignment] {
+    /// `existing` should only hold topics from lessons of the same `style`.
+    public func assignTopics(points: [ExtractedKeyPoint], existing: [TopicCandidate], style: LessonStyle = .singing) async throws -> [TopicAssignment] {
         guard !points.isEmpty else { return [] }
         let data = try await provider.generateJSON(
-            system: Self.principles,
+            system: Self.principles(for: style),
             user: Self.topicPrompt(points: points, topics: existing),
             output: Self.topicSchema
         )
@@ -275,7 +317,8 @@ public struct FeedbackAnalyst: Sendable {
     static func routinePrompt(slots: [RoutineSlotContext], tracks: [TrackOption]) -> String {
         let slotLines = slots.enumerated().map { index, slot in
             let quotes = slot.quotes.prefix(3).map { "“\($0)”" }.joined(separator: " / ")
-            return "[\(index)] \(slot.minutes) min — \(slot.theme.displayName): \(slot.topicTitle) (raised in \(slot.occurrences) lesson(s)). Teacher said: \(quotes)"
+            let tag = slot.style == .screaming ? "\(screamingSlotTag) " : ""
+            return "[\(index)] \(tag)\(slot.minutes) min — \(slot.theme.displayName): \(slot.topicTitle) (raised in \(slot.occurrences) lesson(s)). Teacher said: \(quotes)"
         }
         let trackLines = tracks.map { "- \($0.id): \($0.name) — \($0.detail)" }
         return """
@@ -298,7 +341,7 @@ public struct FeedbackAnalyst: Sendable {
     public func draftRoutine(slots: [RoutineSlotContext], tracks: [TrackOption]) async throws -> [DraftExercise] {
         guard !slots.isEmpty else { return [] }
         let data = try await provider.generateJSON(
-            system: Self.principles,
+            system: Self.routinePrinciples(for: slots),
             user: Self.routinePrompt(slots: slots, tracks: tracks),
             output: Self.routineSchema
         )

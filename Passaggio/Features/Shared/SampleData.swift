@@ -40,7 +40,21 @@ struct SampleData: PreviewModifier {
         let unlabelled = Lesson(title: "Speakers not labelled yet", date: .now.addingTimeInterval(-1 * day),
                                 duration: 2_700, fileName: "sample-unlabelled.m4a", waveform: waveform(seed: 4))
         unlabelled.status = .needsSpeakers
-        for lesson in [analysed, earlier, fresh, unlabelled] { context.insert(lesson) }
+        let screaming = Lesson(title: "False-cord screams", date: .now.addingTimeInterval(-5 * day),
+                               duration: 2_460, fileName: "sample-screaming.m4a", waveform: waveform(seed: 5))
+        screaming.status = .analyzed
+        screaming.style = .screaming
+        for lesson in [analysed, earlier, fresh, unlabelled, screaming] { context.insert(lesson) }
+
+        let screamLines: [(TimeInterval, String)] = [
+            (64, "The rattle sits on top. Underneath it’s still a clean, supported note."),
+            (212, "Brace like you’re about to lift something, then let the scream ride on that."),
+        ]
+        for (start, text) in screamLines {
+            let segment = TranscriptSegment(start: start, end: start + 8, speaker: "teacher", role: .teacher, text: text)
+            context.insert(segment)
+            segment.lesson = screaming
+        }
 
         let lines: [(TimeInterval, SpeakerRole, String)] = [
             (12, .teacher, "Let’s start on an ng hum, five-tone scale, from C3."),
@@ -71,7 +85,9 @@ struct SampleData: PreviewModifier {
         let mix = FeedbackTopic(theme: .registrationMix, title: "Narrow the vowel through the passaggio")
         let jaw = FeedbackTopic(theme: .tensionHabits, title: "Jaw reaching forward on high notes")
         let breath = FeedbackTopic(theme: .breathSupport, title: "Steady airflow on the onset")
-        for topic in [mix, jaw, breath] { context.insert(topic) }
+        let rattle = FeedbackTopic(theme: .distortion, title: "Rattle on top of a supported tone")
+        let brace = FeedbackTopic(theme: .breathSupport, title: "Brace before the scream")
+        for topic in [mix, jaw, breath, rattle, brace] { context.insert(topic) }
 
         let points: [(Lesson, FeedbackTopic, String, String, TimeInterval)] = [
             (analysed, mix, "Narrow the vowel and keep the volume down as you go up through E4.",
@@ -82,6 +98,10 @@ struct SampleData: PreviewModifier {
              "Get lighter before you get there, not once you’ve cracked.", 420),
             (earlier, breath, "Start the note on the breath, without a glottal click.",
              "Think of the air starting before the sound.", 180),
+            (screaming, rattle, "Keep the false-cord rattle on top of a clean, supported note.",
+             "The rattle sits on top. Underneath it’s still a clean, supported note.", 64),
+            (screaming, brace, "Brace before the scream and let it ride on that.",
+             "Brace like you’re about to lift something, then let the scream ride on that.", 212),
         ]
         var keyPoints: [KeyPoint] = []
         for (lesson, topic, summary, quote, time) in points {

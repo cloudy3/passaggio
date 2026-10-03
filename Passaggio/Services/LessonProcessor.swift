@@ -161,15 +161,17 @@ final class LessonProcessor {
         let teacherSegments = lesson.sortedSegments
             .filter { $0.role == .teacher }
             .map { TimedSegment(start: $0.start, end: $0.end, speaker: $0.speaker, role: .teacher, text: $0.text) }
-        let extracted = try await analyst.extractKeyPoints(from: teacherSegments)
+        let extracted = try await analyst.extractKeyPoints(from: teacherSegments, style: lesson.style)
         try Task.checkCancellation()
 
         progress[lesson.id] = Progress(message: "Matching with earlier lessons…", fraction: nil)
-        // Offer every topic except ones only this lesson contributed to, so re-analysing
-        // a lesson doesn't match its points against themselves.
+        // Offer every topic from lessons of the same style except ones only this lesson
+        // contributed to, so re-analysing a lesson doesn't match its points against
+        // themselves. Keeping styles apart means singing topics never absorb screaming
+        // feedback, or the reverse.
         let allTopics = try context.fetch(FetchDescriptor<FeedbackTopic>())
         let candidates = allTopics.filter { topic in
-            topic.keyPoints.contains { $0.lesson?.id != lesson.id }
+            topic.keyPoints.contains { $0.lesson?.id != lesson.id && ($0.lesson?.style ?? .singing) == lesson.style }
         }
         let candidateInputs = candidates.map { topic in
             TopicCandidate(
@@ -181,7 +183,7 @@ final class LessonProcessor {
         }
         let assignments: [TopicAssignment]
         do {
-            assignments = try await analyst.assignTopics(points: extracted, existing: candidateInputs)
+            assignments = try await analyst.assignTopics(points: extracted, existing: candidateInputs, style: lesson.style)
         } catch let error as APIError where !error.isTransient {
             throw error
         } catch {

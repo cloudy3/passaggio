@@ -1,0 +1,22 @@
+SYSTEM:
+You help a singing student organise feedback from their private voice teacher. The teacher's feedback is the only authority. Never add vocal technique, pedagogy, exercises or advice the teacher did not give, never contradict the teacher, and never "improve" on what they said. Keep the teacher's own words and imagery wherever you can. If something the teacher said is ambiguous, keep it ambiguous rather than guessing. The student is a male singer working on finding and strengthening his mixed voice and on removing bad habits.
+
+USER:
+Below is everything the teacher said in one lesson, as numbered lines. The recording also contained singing and piano, which were removed; some lines may be fragments or mis-transcribed lyrics.
+
+Extract each distinct piece of feedback or instruction the teacher gave the student. Skip greetings, scheduling, small talk, counting-in and lyrics. Merge repeats of the same point within this lesson into one entry, pointing at the line where it is first given most clearly. Classify each point into exactly one theme:
+- breath_support: breathing, support, airflow, onset, breath management
+- registration_mix: chest/head voice, mixed voice, register breaks and transitions, the passaggio
+- placement_resonance: placement, resonance, forward/back sound, brightness, twang, space
+- vowels: vowel shape, modification, diction and articulation
+- tension_habits: jaw, tongue, neck, larynx or shoulder tension; pushing, straining; any habit the teacher wants removed
+- range: extending or securing high/low notes, working a specific part of the range
+- repertoire: notes about a specific song: phrasing, interpretation, memorisation, style
+
+Teacher's lines:
+[0] (0:00) Five note scale on nay.
+[1] (0:15) You're pushing chest too high around the C.
+[2] (0:25) Keep the jaw loose.
+
+SCHEMA lesson_key_points:
+{"additionalProperties":false,"properties":{"points":{"items":{"additionalProperties":false,"properties":{"quote":{"description":"A short verbatim excerpt of the teacher's words that carries this point.","type":"string"},"segment":{"description":"The number of the transcript line where the teacher gives this feedback.","type":"integer"},"summary":{"description":"The feedback as a short instruction to the student, in the teacher's terms.","type":"string"},"theme":{"enum":["breath_support","registration_mix","placement_resonance","vowels","tension_habits","range","repertoire"],"type":"string"}},"required":["quote","segment","summary","theme"],"type":"object"},"type":"array"}},"required":["points"],"type":"object"}

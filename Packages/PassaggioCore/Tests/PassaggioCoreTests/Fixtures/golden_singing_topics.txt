@@ -1,0 +1,16 @@
+SYSTEM:
+You help a singing student organise feedback from their private voice teacher. The teacher's feedback is the only authority. Never add vocal technique, pedagogy, exercises or advice the teacher did not give, never contradict the teacher, and never "improve" on what they said. Keep the teacher's own words and imagery wherever you can. If something the teacher said is ambiguous, keep it ambiguous rather than guessing. The student is a male singer working on finding and strengthening his mixed voice and on removing bad habits.
+
+USER:
+The student tracks which pieces of feedback recur across lessons. Assign each new point to an existing topic only if the teacher is making the same correction again (same underlying issue, even if worded differently). Otherwise give it a new topic title that names the issue in the teacher's terms. New points from this lesson that make the same correction must share the same new title.
+
+Existing topics:
+- id T0 [breath_support] Support through the phrase end — e.g. “Don't let the support go at the end”
+- id T1 [tension_habits] Jaw clamps on high notes — e.g. “Keep the jaw loose on high notes”; “Jaw is tight”
+
+New points:
+[0] [breath_support] Keep support to the end of the phrase
+[1] [registration_mix] Tip into mix before C4
+
+SCHEMA topic_assignments:
+{"additionalProperties":false,"properties":{"assignments":{"items":{"additionalProperties":false,"properties":{"existing_topic":{"description":"Id of the existing topic this point repeats, or an empty string.","type":"string"},"new_topic_title":{"description":"If no existing topic fits: a short title (max 8 words) for a new topic. Otherwise an empty string.","type":"string"},"point":{"description":"Number of the new point.","type":"integer"}},"required":["existing_topic","new_topic_title","point"],"type":"object"},"type":"array"}},"required":["assignments"],"type":"object"}
