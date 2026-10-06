@@ -150,6 +150,17 @@ struct PassaggioAppTests {
         #expect(file.fileFormat.settings[AVFormatIDKey] as? UInt32 == kAudioFormatLinearPCM)
     }
 
+    @Test func shortestReferenceClipIsNotCutShort() async throws {
+        // The API takes references of 2–10 s, and My Voice starts at exactly 2 s.
+        let spec = ExerciseSpec.passaggioFocus(.arpeggio)
+        let source = try await ExerciseRenderer.renderedFile(for: spec)
+        let destination = FileManager.default.temporaryDirectory.appendingPathComponent("ref-\(UUID()).wav")
+        defer { FileStore.removeIfPresent(destination) }
+        try await AudioExport.exportWAV(from: source, range: 1.3...3.3, to: destination)
+        let file = try AVAudioFile(forReading: destination)
+        #expect(file.length >= 32_000)
+    }
+
     @Test func referenceClipIsDownmixedToFitTheFormFieldLimit() async throws {
         let spec = ExerciseSpec.passaggioFocus(.arpeggio)
         let source = try await ExerciseRenderer.renderedFile(for: spec)

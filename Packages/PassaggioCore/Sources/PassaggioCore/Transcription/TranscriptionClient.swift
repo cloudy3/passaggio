@@ -31,6 +31,14 @@ public struct SpeakerReferenceClip: Sendable {
 
     public static let allowedDuration: ClosedRange<TimeInterval> = 2...10
     public static let maximumCount = 4
+
+    /// Whether a selection of `duration` seconds can be saved as a reference. Moving a
+    /// selection's edges in 0.1 s steps leaves floating-point drift, so one shown as
+    /// 2.0 s can measure 1.9999999999 s. That still counts as 2 s.
+    public static func accepts(duration: TimeInterval) -> Bool {
+        let drift = 1e-6
+        return duration >= allowedDuration.lowerBound - drift && duration <= allowedDuration.upperBound + drift
+    }
 }
 
 /// `POST /v1/audio/transcriptions` with `gpt-4o-transcribe-diarize`.

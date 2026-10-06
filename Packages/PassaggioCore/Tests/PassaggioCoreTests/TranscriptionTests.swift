@@ -216,6 +216,18 @@ struct TranscriptionRequestTests {
         #expect(fits.dataURL.utf8.count < SpeakerReferenceClip.maximumFormFieldBytes)
     }
 
+    @Test func acceptsReferenceLengthsThatDriftAtTheLimits() {
+        // A 6 s selection whose end is moved back forty times by 0.1 s, as in the app.
+        let start = 42.5
+        var end = start + 6
+        for _ in 0..<40 { end -= 0.1 }
+        #expect(end - start < 2) // The drift this guards against.
+        #expect(SpeakerReferenceClip.accepts(duration: end - start))
+        #expect(SpeakerReferenceClip.accepts(duration: 10.000_000_000_1))
+        #expect(!SpeakerReferenceClip.accepts(duration: 1.9))
+        #expect(!SpeakerReferenceClip.accepts(duration: 10.1))
+    }
+
     @Test func caps4References() throws {
         let client = OpenAITranscriptionClient(apiKey: "k", http: StubHTTPClient([]))
         let refs = (0..<6).map { SpeakerReferenceClip(name: "s\($0)", audio: Data([0])) }

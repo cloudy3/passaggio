@@ -27,6 +27,9 @@ struct RangeSelectionSheet: View {
         var defaultLength: TimeInterval {
             switch self {
             case .clip: 20
+            // Lessons are mostly the teacher talking, so a long stretch of only the
+            // student's voice is hard to find. The API accepts 2 s.
+            case .reference(.student): 2
             case .reference: 6
             }
         }
@@ -56,7 +59,7 @@ struct RangeSelectionSheet: View {
             if name.trimmingCharacters(in: .whitespaces).isEmpty { return "Give the clip a name." }
         case .reference:
             let allowed = SpeakerReferenceClip.allowedDuration
-            if !allowed.contains(length) {
+            if !SpeakerReferenceClip.accepts(duration: length) {
                 return "Select \(Int(allowed.lowerBound))–\(Int(allowed.upperBound)) seconds of only this voice (now \(String(format: "%.1f", length)) s)."
             }
         }
